@@ -35,7 +35,10 @@ func main() {
 	completedChannel := make(chan bool)
 
 	// Parse CSV for quiz questions
-	questions := loadQuizFile(*csvPath)
+	questions, err := loadQuizFile(*csvPath)
+	if err != nil {
+		os.Exit(1)
+	}
 
 	if *random {
 		fmt.Printf("Randomising the questions...\n")
@@ -68,12 +71,12 @@ func main() {
 }
 
 // loadQuizFile loads a CSV file from csvPath and returns them as a slice a quiz questions.
-func loadQuizFile(csvPath string) []quizQuestion {
+func loadQuizFile(csvPath string) ([]quizQuestion, error) {
 	questions := make([]quizQuestion, 0)
 
 	b, err := os.ReadFile(csvPath)
 	if err != nil {
-		log.Fatalf("Problem reading the quiz file at '%s': %v", csvPath, err)
+		return questions, fmt.Errorf("problem reading the quiz file at '%s': %v", csvPath, err)
 	}
 
 	reader := csv.NewReader(bytes.NewReader(b))
@@ -95,7 +98,7 @@ func loadQuizFile(csvPath string) []quizQuestion {
 		q := quizQuestion{question: csvRecord[0], answer: csvRecord[1]}
 		questions = append(questions, q)
 	}
-	return questions
+	return questions, nil
 }
 
 // printResults prints out the number of correctly answered questions vs total quiz questions.
