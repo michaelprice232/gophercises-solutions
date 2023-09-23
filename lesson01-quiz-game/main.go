@@ -21,7 +21,7 @@ type quizQuestion struct {
 
 func main() {
 	var csvPath = flag.String("csv", "problems.csv", "a csv file in the format of 'question,answer' (default problems.csv)")
-	var limit = flag.String("limit", "30s", "the time limit for the quiz' (default 30s)")
+	var limit = flag.String("limit", "30s", "the time limit for the quiz (default 30s)")
 	var random = flag.Bool("random", false, "whether to randomise the questions (default false)")
 	flag.Parse()
 
@@ -45,11 +45,11 @@ func main() {
 	// Run Quiz
 	waitForPrompt(*limit)
 	go askQuestions(resultsChannel, completedChannel, questions)
-	timeout := time.Tick(timeLimit)
+	timeout := time.NewTimer(timeLimit)
 
 	for {
 		select {
-		case <-timeout:
+		case <-timeout.C:
 			fmt.Print("\nTimeout!")
 			printResults(correctAnswers, len(questions))
 			os.Exit(0)
@@ -77,7 +77,7 @@ func loadQuizFile(csvPath string) []quizQuestion {
 	}
 
 	reader := csv.NewReader(bytes.NewReader(b))
-
+	// Could have used reader.ReadAll instead to avoid iterating. Creates a slice (for each row) of slices
 	for {
 		csvRecord, err := reader.Read()
 		if err == io.EOF {
@@ -126,6 +126,7 @@ func askQuestions(rc chan quizQuestion, cc chan bool, questions []quizQuestion) 
 func checkAnswer(question quizQuestion, number int) bool {
 	fmt.Printf("Question #%d: %s = ", number+1, question.question)
 
+	// could have used fmt.Scanf instead as only using single words
 	readStdin := bufio.NewReader(os.Stdin)
 	// Using ReadLine does not include the trailing \n like with ReadString
 	answer, _, err := readStdin.ReadLine()
@@ -140,7 +141,7 @@ func checkAnswer(question quizQuestion, number int) bool {
 	return false
 }
 
-// waitForPrompt prompts the user to press any key before the quick (and timer) starts.
+// waitForPrompt prompts the user to press any key before the quiz (and timer) starts.
 func waitForPrompt(duration string) {
 	fmt.Printf("Enter any key to start timer (%s): ", duration)
 
