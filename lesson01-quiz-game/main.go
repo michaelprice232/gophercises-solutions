@@ -37,7 +37,7 @@ func main() {
 	// Parse CSV for quiz questions
 	questions, err := loadQuizFile(*csvPath)
 	if err != nil {
-		os.Exit(1)
+		log.Fatalln(err)
 	}
 
 	if *random {
@@ -46,21 +46,28 @@ func main() {
 	}
 
 	// Run Quiz
-	waitForPrompt(*limit)
+	err = waitForPrompt(*limit, os.Stdin)
+	if err != nil {
+		log.Fatalln(err)
+	}
+
 	go askQuestions(resultsChannel, completedChannel, questions)
 	timeout := time.NewTimer(timeLimit)
 
 	for {
 		select {
+		// Time has run out before all the questions have been answered
 		case <-timeout.C:
-			fmt.Print("\nTimeout!")
+			fmt.Printf("\nTimeout!")
 			printResults(correctAnswers, len(questions))
 			os.Exit(0)
 
+		// All the questions have been answered
 		case <-completedChannel:
 			printResults(correctAnswers, len(questions))
 			os.Exit(0)
 
+		// A single successful result has been received
 		case _, ok := <-resultsChannel:
 			// ok indicates that it received an event rather than a zero value caused by the channel closing
 			if ok {
@@ -70,7 +77,7 @@ func main() {
 	}
 }
 
-// loadQuizFile loads a CSV file from csvPath and returns them as a slice a quiz questions.
+// loadQuizFile loads a CSV file from csvPath and returns them as a slice a quizQuestion.
 func loadQuizFile(csvPath string) ([]quizQuestion, error) {
 	questions := make([]quizQuestion, 0)
 
@@ -80,7 +87,7 @@ func loadQuizFile(csvPath string) ([]quizQuestion, error) {
 	}
 
 	reader := csv.NewReader(bytes.NewReader(b))
-	// Could have used reader.ReadAll instead to avoid iterating. Creates a slice (for each row) of slices
+	// Could have used reader.ReadAll instead to avoid iterating, which creates a slice (for each row) of slices (for each field)
 	for {
 		csvRecord, err := reader.Read()
 		if err == io.EOF {
@@ -111,7 +118,7 @@ func printResults(correctAnswers, totalNumber int) {
 // When all questions have been processed an event is sent to the cc channel to indicate completion.
 func askQuestions(rc chan quizQuestion, cc chan bool, questions []quizQuestion) {
 	for i, question := range questions {
-		result := checkAnswer(question, i)
+		result := checkAnswer(question, i, os.Stdin)
 		// Send correct answers via the channel to be totalled in the main go routine
 		if result {
 			rc <- question
@@ -126,14 +133,15 @@ func askQuestions(rc chan quizQuestion, cc chan bool, questions []quizQuestion) 
 
 // checkAnswer asks the user a question on the terminal and inspects the response via stdin.
 // All whitespace and case or ignored when comparing answers.
-func checkAnswer(question quizQuestion, number int) bool {
+func checkAnswer(question quizQuestion, number int, reader io.Reader) bool {
 	fmt.Printf("Question #%d: %s = ", number+1, question.question)
 
 	// could have used fmt.Scanf instead as only using single words
-	readStdin := bufio.NewReader(os.Stdin)
+	readStdin := bufio.NewReader(reader)
 	// Using ReadLine does not include the trailing \n like with ReadString
 	answer, _, err := readStdin.ReadLine()
 	if err != nil {
+		log.Printf("problem reading input from stdin: %v", err)
 		return false
 	}
 	// Trim all whitespace and ignore case
@@ -145,16 +153,16 @@ func checkAnswer(question quizQuestion, number int) bool {
 }
 
 // waitForPrompt prompts the user to press any key before the quiz (and timer) starts.
-func waitForPrompt(duration string) {
+func waitForPrompt(duration string, reader io.Reader) error {
 	fmt.Printf("Enter any key to start timer (%s): ", duration)
 
-	readStdin := bufio.NewReader(os.Stdin)
+	readStdin := bufio.NewReader(reader)
 	_, _, err := readStdin.ReadLine()
 	if err != nil {
-		log.Fatalf("Problem reading from stdin: %v", err)
+		return fmt.Errorf("problem reading from stdin: %v", err)
 	}
 
-	return
+	return nil
 }
 
 // randomiseQuestions is called when the --random flag is set, which randomises the questions from the quiz file.
