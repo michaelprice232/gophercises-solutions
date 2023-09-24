@@ -3,6 +3,7 @@
 My solution from: https://courses.calhoun.io/lessons/les_goph_01
 
 Small app to read some quiz questions and answers from a CSV file and then ask them interactively to the user via the terminal.
+Offers a timer and option to randomise the questions.
 
 ## Usage
 
