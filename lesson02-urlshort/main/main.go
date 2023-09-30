@@ -37,7 +37,7 @@ func main() {
 	}
 	mapHandler := urlshort.MapHandler(pathsToUrls, mux)
 
-	// Build the YAMLHandler or JSONHandler using the mapHandler as the fallback
+	// Decide which handler to use (JSON/YAML/DB) based on flags, with mapHandler as the fallback
 	var handler http.HandlerFunc
 	handler, err = callHandler(yamlConfigPath, jsonConfigPath, readFromDatabase, config, mapHandler)
 	if err != nil {
