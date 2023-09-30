@@ -1,10 +1,12 @@
 package urlshort
 
 import (
+	"database/sql"
 	"encoding/json"
 	"fmt"
 	"net/http"
 
+	_ "github.com/lib/pq"
 	"gopkg.in/yaml.v3"
 )
 
@@ -37,6 +39,7 @@ func MapHandler(pathsToUrls map[string]string, fallback http.Handler) http.Handl
 type redirect struct {
 	Path string `yaml:"path"`
 	URL  string `yaml:"url"`
+	Id   int    `yaml:"id"`
 }
 
 type redirects []redirect
@@ -108,4 +111,37 @@ func parseJSON(jsonStr []byte) (redirects, error) {
 	}
 
 	return r, err
+}
+
+// DBHandler reads the config from a Postgres database instead of a file
+func DBHandler(fallback http.Handler) (http.HandlerFunc, error) {
+	// todo: read these from env vars
+	connectionStr := "postgres://postgres:test@localhost/postgres?sslmode=disable"
+	db, err := sql.Open("postgres", connectionStr)
+	if err != nil {
+		return nil, fmt.Errorf("opening database connection: %v", err)
+	}
+
+	rows, err := db.Query("SELECT * from redirects")
+	if err != nil {
+		return nil, fmt.Errorf("querying database: %v", err)
+	}
+	defer rows.Close()
+
+	records := make(redirects, 0)
+	for rows.Next() {
+		var r redirect
+		if err := rows.Scan(&r.Id, &r.Path, &r.URL); err != nil {
+			return nil, fmt.Errorf("reading database records: %s", err)
+		}
+		records = append(records, r)
+
+	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("reading database records: %s", err)
+	}
+
+	pathMap := buildMap(records)
+
+	return MapHandler(pathMap, fallback), nil
 }

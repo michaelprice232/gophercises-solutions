@@ -43,10 +43,11 @@ As a bonus exercises you can also...
 
 ## Running Locally
 ```shell
-# Expects exactly 1 config path to be set
-go run main/main.go [--yaml-config <file>] [--json-config <file>]
+# Expects either (exactly) 1 config file to be set (JSON/YAML) OR the --read-from-db flag (reads from database)
+go run main/main.go [--yaml-config <file>] [--json-config <file>] [--read-from-db]
 
 # Examples
 go run main/main.go --yaml-config config/config.yaml
 go run main/main.go --json-config config/config.json
+go run main/main.go --read-from-db
 ```

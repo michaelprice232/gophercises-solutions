@@ -15,11 +15,17 @@ const httpPort = 8080
 func main() {
 	yamlConfigPath := flag.String("yaml-config", "", "path to a YAML config file e.g. ./config/config.yaml")
 	jsonConfigPath := flag.String("json-config", "", "path to a JSON config file e.g. ./config/config.json")
+	readFromDatabase := flag.Bool("read-from-db", false, "read from database instead of YAML/JSON config file")
 	flag.Parse()
-	config, err := parseConfigFromFile(yamlConfigPath, jsonConfigPath)
-	if err != nil {
-		slog.Error(fmt.Sprintf("unable to load config from file: %v", err))
-		os.Exit(1)
+
+	var err error
+	var config []byte
+	if !*readFromDatabase {
+		config, err = parseConfigFromFile(yamlConfigPath, jsonConfigPath)
+		if err != nil {
+			slog.Error(fmt.Sprintf("unable to load config from file: %v", err))
+			os.Exit(1)
+		}
 	}
 
 	mux := defaultMux()
@@ -33,7 +39,7 @@ func main() {
 
 	// Build the YAMLHandler or JSONHandler using the mapHandler as the fallback
 	var handler http.HandlerFunc
-	handler, err = callFileHandler(yamlConfigPath, jsonConfigPath, config, mapHandler)
+	handler, err = callHandler(yamlConfigPath, jsonConfigPath, readFromDatabase, config, mapHandler)
 	if err != nil {
 		slog.Error(fmt.Sprintf("error whilst reading config from file: %s", err))
 		os.Exit(1)
@@ -47,15 +53,26 @@ func main() {
 	}
 }
 
-// callFileHandler determines which type of config file has been passed and calls the respective handler
-func callFileHandler(ymlFile, jsonFile *string, config []byte, fallback http.HandlerFunc) (http.HandlerFunc, error) {
+// callHandler determines which type of config file has been passed and calls the respective handler
+func callHandler(ymlFile, jsonFile *string, dbFlag *bool, config []byte, fallback http.HandlerFunc) (http.HandlerFunc, error) {
 	var handler http.HandlerFunc
 	var err error
+
+	if *dbFlag {
+		handler, err = urlshort.DBHandler(fallback)
+		if err != nil {
+			return nil, err
+		}
+
+		return handler, nil
+	}
+
 	if *ymlFile != "" {
 		handler, err = urlshort.YAMLHandler(config, fallback)
 		if err != nil {
 			return nil, err
 		}
+		return handler, err
 	}
 	if *jsonFile != "" {
 		handler, err = urlshort.JSONHandler(config, fallback)
@@ -86,10 +103,10 @@ func readFile(path string) ([]byte, error) {
 	return b, err
 }
 
-// parseConfigFromFile validates the config file parameters an then returns the respective file contents
+// parseConfigFromFile validates the config file parameters and then returns the respective file contents
 func parseConfigFromFile(ymlFile, jsonFile *string) ([]byte, error) {
 	if (*ymlFile == "" && *jsonFile == "") || (*ymlFile != "" && *jsonFile != "") {
-		return nil, fmt.Errorf("exactly one config file must be set: either yaml-config or json-config")
+		return nil, fmt.Errorf("exactly one config file must be set (yaml-config or json-config)")
 	}
 
 	var configPath string
