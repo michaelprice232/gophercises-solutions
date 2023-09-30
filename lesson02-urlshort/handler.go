@@ -1,6 +1,7 @@
 package urlshort
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/http"
 
@@ -33,6 +34,13 @@ func MapHandler(pathsToUrls map[string]string, fallback http.Handler) http.Handl
 	}
 }
 
+type redirect struct {
+	Path string `yaml:"path"`
+	URL  string `yaml:"url"`
+}
+
+type redirects []redirect
+
 // YAMLHandler will parse the provided YAML and then return a http.HandlerFunc (which also implements http.Handler)
 // that will attempt to map any paths to their corresponding URL.
 // If the path is not provided in the YAML, then the fallback http.Handler will be called instead.
@@ -46,16 +54,17 @@ func MapHandler(pathsToUrls map[string]string, fallback http.Handler) http.Handl
 //
 // See MapHandler to create a similar http.HandlerFunc via a mapping of paths to urls.
 func YAMLHandler(yml []byte, fallback http.Handler) (http.HandlerFunc, error) {
-	re, err := parseYAML(yml)
+	red, err := parseYAML(yml)
 	if err != nil {
 		return nil, err
 	}
 
-	pathMap := buildMap(re)
+	pathMap := buildMap(red)
 
 	return MapHandler(pathMap, fallback), nil
 }
 
+// parseYAML reads a YAML string and returns a redirects
 func parseYAML(yml []byte) (redirects, error) {
 	r := make(redirects, 0)
 
@@ -67,18 +76,36 @@ func parseYAML(yml []byte) (redirects, error) {
 	return r, err
 }
 
+// buildMap returns redirects as a map, so we have a common data format for re-use
 func buildMap(r redirects) map[string]string {
 	m := make(map[string]string)
-	for _, re := range r {
-		m[re.Path] = re.URL
+	for _, red := range r {
+		m[red.Path] = red.URL
 	}
 
 	return m
 }
 
-type redirect struct {
-	Path string `yaml:"path"`
-	URL  string `yaml:"url"`
+// JSONHandler is the same as YAMLHandler although handles JSON source data
+func JSONHandler(jsonStr []byte, fallback http.Handler) (http.HandlerFunc, error) {
+	red, err := parseJSON(jsonStr)
+	if err != nil {
+		return nil, err
+	}
+
+	pathMap := buildMap(red)
+
+	return MapHandler(pathMap, fallback), nil
 }
 
-type redirects []redirect
+// parseJSON reads a JSON string and returns a redirects
+func parseJSON(jsonStr []byte) (redirects, error) {
+	r := make(redirects, 0)
+
+	err := json.Unmarshal(jsonStr, &r)
+	if err != nil {
+		return nil, fmt.Errorf("unmarshalling: %v", err)
+	}
+
+	return r, err
+}

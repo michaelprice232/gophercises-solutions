@@ -1,0 +1,14 @@
+[
+  {
+    "path": "/json1",
+    "url": "https://json-1.com"
+  },
+  {
+    "path": "/json2",
+    "url": "https://json-2.com"
+  },
+  {
+    "path": "/json3",
+    "url": "https://json-3.com"
+  }
+]

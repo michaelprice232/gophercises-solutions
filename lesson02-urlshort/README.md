@@ -39,3 +39,14 @@ As a bonus exercises you can also...
 1. Update the [main/main.go](https://github.com/gophercises/urlshort/blob/master/main/main.go) source file to accept a YAML file as a flag and then load the YAML from a file rather than from a string.
 2. Build a JSONHandler that serves the same purpose, but reads from JSON data.
 3. Build a Handler that doesn't read from a map but instead reads from a database. Whether you use BoltDB, SQL, or something else is entirely up to you.
+
+
+## Running Locally
+```shell
+# Expects exactly 1 config path to be set
+go run main/main.go [--yaml-config <file>] [--json-config <file>]
+
+# Examples
+go run main/main.go --yaml-config config/config.yaml
+go run main/main.go --json-config config/config.json
+```
