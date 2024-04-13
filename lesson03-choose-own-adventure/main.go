@@ -47,35 +47,32 @@ func (h handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if data, found := h.adventure[requestPath]; found {
 		err := renderPage(w, data)
 		if err != nil {
+			// Only print the real error to stdout
 			log.Printf("error rendering page: %s", err)
 		}
 		return
 	}
 
 	// Not found arc
-	w.WriteHeader(http.StatusNotFound)
-	_, err := w.Write([]byte("<h1>Arc not found</h1>"))
-	if err != nil {
-		log.Printf("error writing HTTP response: %v", err)
-	}
+	http.Error(w, "Arc not found", http.StatusNotFound)
 }
 
 func renderPage(w http.ResponseWriter, data *Arc) error {
 	bodyBytes, err := os.ReadFile("templates/page.html")
 	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
+		http.Error(w, "Something went wrong...", http.StatusInternalServerError)
 		return fmt.Errorf("error reading template source file: %s", err)
 	}
 
 	tmpl, err := template.New("page").Parse(string(bodyBytes))
 	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
+		http.Error(w, "Something went wrong...", http.StatusInternalServerError)
 		return fmt.Errorf("error parsing HTML template: %s", err)
 	}
 
 	err = tmpl.Execute(w, data)
 	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
+		http.Error(w, "Something went wrong...", http.StatusInternalServerError)
 		return fmt.Errorf("error executing HTML template: %s", err)
 	}
 
