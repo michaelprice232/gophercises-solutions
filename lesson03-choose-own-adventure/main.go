@@ -13,6 +13,7 @@ import (
 const (
 	adventureFilePath = "story.json"
 	defaultArc        = "intro"
+	htmlTemplate      = "./templates/page.html"
 )
 
 type Arc struct {
@@ -26,7 +27,8 @@ type Arc struct {
 
 // handler is used to serve HTTP requests and satisfies http.Handler
 type handler struct {
-	adventure map[string]*Arc
+	adventure    map[string]*Arc
+	htmlTemplate *template.Template
 }
 
 func (h handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -43,9 +45,9 @@ func (h handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 	log.Printf("Raw URL: %s, Extracted arc: %s", rawRequestPath, requestPath)
 
-	// Load the title if the request path correlates with an arc name
+	// Render the page if the request path correlates with an arc name
 	if data, found := h.adventure[requestPath]; found {
-		err := renderPage(w, data)
+		err := h.renderPage(w, data)
 		if err != nil {
 			// Only print the real error to stdout
 			log.Printf("error rendering page: %s", err)
@@ -57,20 +59,8 @@ func (h handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	http.Error(w, "Arc not found", http.StatusNotFound)
 }
 
-func renderPage(w http.ResponseWriter, data *Arc) error {
-	bodyBytes, err := os.ReadFile("templates/page.html")
-	if err != nil {
-		http.Error(w, "Something went wrong...", http.StatusInternalServerError)
-		return fmt.Errorf("error reading template source file: %s", err)
-	}
-
-	tmpl, err := template.New("page").Parse(string(bodyBytes))
-	if err != nil {
-		http.Error(w, "Something went wrong...", http.StatusInternalServerError)
-		return fmt.Errorf("error parsing HTML template: %s", err)
-	}
-
-	err = tmpl.Execute(w, data)
+func (h handler) renderPage(w http.ResponseWriter, data *Arc) error {
+	err := h.htmlTemplate.Execute(w, data)
 	if err != nil {
 		http.Error(w, "Something went wrong...", http.StatusInternalServerError)
 		return fmt.Errorf("error executing HTML template: %s", err)
@@ -94,6 +84,19 @@ func loadAdventure(sourceFilepath string) (map[string]*Arc, error) {
 	return adventure, nil
 }
 
+func loadHTMLTemplate(templatePath string) (*template.Template, error) {
+	bodyBytes, err := os.ReadFile(templatePath)
+	if err != nil {
+		return nil, fmt.Errorf("error reading template source file from '%s': %s", templatePath, err)
+	}
+
+	tmpl, err := template.New("page").Parse(string(bodyBytes))
+	if err != nil {
+		return nil, fmt.Errorf("error parsing HTML template using source file '%s': %s", templatePath, err)
+	}
+	return tmpl, nil
+}
+
 func main() {
 	adventure, err := loadAdventure(adventureFilePath)
 	if err != nil {
@@ -101,8 +104,13 @@ func main() {
 	}
 	log.Printf("Loaded %d stories", len(adventure))
 
+	tmpl, err := loadHTMLTemplate(htmlTemplate)
+	if err != nil {
+		log.Fatalf("loading HTML template: %v", err)
+	}
+
 	mux := http.NewServeMux()
-	mux.Handle("/", handler{adventure: adventure})
+	mux.Handle("/", handler{adventure: adventure, htmlTemplate: tmpl})
 
 	log.Printf("HTTP server listening on port 8080")
 	if err = http.ListenAndServe(":8080", mux); err != nil {
