@@ -1,0 +1,24 @@
+
+2024/04/20 10:37:54 &{Parent:<nil> FirstChild:0x140000e2070 LastChild:0x140000e2070 PrevSibling:<nil> NextSibling:<nil> Type:2 DataAtom: Data: Namespace: Attr:[]}
+2024/04/20 10:37:54 &{Parent:0x140000e2000 FirstChild:0x140000e20e0 LastChild:0x140000e2150 PrevSibling:<nil> NextSibling:<nil> Type:3 DataAtom:html Data:html Namespace: Attr:[{Namespace: Key:lang Val:en}]}
+2024/04/20 10:37:54 &{Parent:0x140000e2070 FirstChild:<nil> LastChild:<nil> PrevSibling:<nil> NextSibling:0x140000e2150 Type:3 DataAtom:head Data:head Namespace: Attr:[]}
+2024/04/20 10:37:54 &{Parent:0x140000e2070 FirstChild:0x140000e21c0 LastChild:0x140000e2700 PrevSibling:0x140000e20e0 NextSibling:<nil> Type:3 DataAtom:body Data:body Namespace: Attr:[]}
+2024/04/20 10:37:54 &{Parent:0x140000e2150 FirstChild:<nil> LastChild:<nil> PrevSibling:<nil> NextSibling:0x140000e2230 Type:1 DataAtom: Data: Namespace: Attr:[]}
+2024/04/20 10:37:54 &{Parent:0x140000e2150 FirstChild:0x140000e22a0 LastChild:0x140000e22a0 PrevSibling:0x140000e21c0 NextSibling:0x140000e2310 Type:3 DataAtom:h1 Data:h1 Namespace: Attr:[]}
+2024/04/20 10:37:54 &{Parent:0x140000e2230 FirstChild:<nil> LastChild:<nil> PrevSibling:<nil> NextSibling:<nil> Type:1 DataAtom: Data:Hello! Namespace: Attr:[]}
+2024/04/20 10:37:54 &{Parent:0x140000e2150 FirstChild:<nil> LastChild:<nil> PrevSibling:0x140000e2230 NextSibling:0x140000e2380 Type:1 DataAtom: Data: Namespace: Attr:[]}
+
+2024/04/20 10:37:54 &{Parent:0x140000e2150 FirstChild:0x140000e23f0 LastChild:0x140000e23f0 PrevSibling:0x140000e2310 NextSibling:0x140000e2460 Type:3 DataAtom:a Data:a Namespace: Attr:[{Namespace: Key:href Val:/other-page}]}
+2024/04/20 10:37:54 &{Parent:0x140000e2380 FirstChild:<nil> LastChild:<nil> PrevSibling:<nil> NextSibling:<nil> Type:1 DataAtom: Data:A link to another page Namespace: Attr:[]}
+
+2024/04/20 10:37:54 &{Parent:0x140000e2150 FirstChild:<nil> LastChild:<nil> PrevSibling:0x140000e2380 NextSibling:0x140000e24d0 Type:1 DataAtom: Data: Namespace: Attr:[]}
+
+2024/04/20 10:37:54 &{Parent:0x140000e2150 FirstChild:0x140000e2540 LastChild:0x140000e2540 PrevSibling:0x140000e2460 NextSibling:0x140000e25b0 Type:3 DataAtom:a Data:a Namespace: Attr:[{Namespace: Key:href Val:/mike}]}
+2024/04/20 10:37:54 &{Parent:0x140000e24d0 FirstChild:<nil> LastChild:<nil> PrevSibling:<nil> NextSibling:<nil> Type:1 DataAtom: Data:Mike's page Namespace: Attr:[]}
+
+2024/04/20 10:37:54 &{Parent:0x140000e2150 FirstChild:<nil> LastChild:<nil> PrevSibling:0x140000e24d0 NextSibling:0x140000e2620 Type:1 DataAtom: Data: Namespace: Attr:[]}
+
+2024/04/20 10:37:54 &{Parent:0x140000e2150 FirstChild:0x140000e2690 LastChild:0x140000e2690 PrevSibling:0x140000e25b0 NextSibling:0x140000e2700 Type:3 DataAtom:a Data:a Namespace: Attr:[{Namespace: Key:href Val:/bob}]}
+2024/04/20 10:37:54 &{Parent:0x140000e2620 FirstChild:<nil> LastChild:<nil> PrevSibling:<nil> NextSibling:<nil> Type:1 DataAtom: Data:Bob's page Namespace: Attr:[]}
+
+2024/04/20 10:37:54 &{Parent:0x140000e2150 FirstChild:<nil> LastChild:<nil> PrevSibling:0x140000e2620 NextSibling:<nil> Type:1 DataAtom: Data: Namespace: Attr:[]}
