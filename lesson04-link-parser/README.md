@@ -2,7 +2,9 @@
 
 My implementation of [exercise 4](https://github.com/gophercises/link) on [Gophercises](https://gophercises.com/).
 
-Parses a HTML document from file for any links and grabs the text from them.
+Parses an HTML document from file for any links and grabs the text from them.
+
+I found this to be a tough exercise and my solution does not work for all the cases that the instructors solution works for (see commented out unit test case), but I have kept this code as-is, to serve as a learning record.  
 
 ## How to run
 
