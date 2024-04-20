@@ -14,8 +14,8 @@ type Link struct {
 	Text string
 }
 
-// ParseLinks recursively parses an HTML tree and extracts any text from the child elements
-// Expects a html.Node pointer parsed from the x/net/html module
+// ParseLinks recursively parses an HTML tree for links and extracts any text from the child elements.
+// Expects a html.Node pointer parsed from the x/net/html module.
 func ParseLinks(rootNode *html.Node) []Link {
 	var f func(*html.Node)
 	links := make([]Link, 0)
@@ -24,7 +24,6 @@ func ParseLinks(rootNode *html.Node) []Link {
 	var textForLink string
 
 	f = func(n *html.Node) {
-
 		if n.Type == html.ElementNode && n.Data == "a" {
 
 			textForLink = ""
@@ -33,7 +32,6 @@ func ParseLinks(rootNode *html.Node) []Link {
 			// Process only direct children, looking for text
 			for ic := n.FirstChild; ic != nil; ic = ic.Parent.NextSibling {
 				if ic.Type == html.TextNode {
-
 					// Remove newlines and whitespace
 					d := strings.TrimSpace(ic.Data)
 
@@ -44,12 +42,7 @@ func ParseLinks(rootNode *html.Node) []Link {
 				}
 			}
 
-			link := Link{
-				Href: linkValue,
-				Text: textForLink,
-			}
-			links = append(links, link)
-
+			links = append(links, Link{Href: linkValue, Text: textForLink})
 		}
 
 		// Recursive through all nodes in the tree
@@ -63,7 +56,7 @@ func ParseLinks(rootNode *html.Node) []Link {
 	return links
 }
 
-// hrefValue retrieves the href value from a slice of attributes returned for a html.Node
+// hrefValue retrieves the href value from a slice of attributes returned for a html.Node.
 func hrefValue(attr []html.Attribute) string {
 	for _, a := range attr {
 		if a.Key == "href" {
@@ -73,7 +66,7 @@ func hrefValue(attr []html.Attribute) string {
 	return "<not-found>"
 }
 
-// ParseHTML returns a node tree based on a HTML source file
+// ParseHTML returns a node tree based on an HTML source file.
 func ParseHTML(path string) (*html.Node, error) {
 	b, err := os.ReadFile(path)
 	if err != nil {

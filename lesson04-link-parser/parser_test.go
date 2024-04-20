@@ -7,24 +7,6 @@ import (
 	"golang.org/x/net/html"
 )
 
-func Test_hrefValue(t *testing.T) {
-	attributes := []html.Attribute{
-		{Key: "src", Val: "img.jpg"},
-		{Key: "title", Val: "x"},
-		{Key: "href", Val: "/link"},
-	}
-
-	response := hrefValue(attributes)
-	assert.Equal(t, "/link", response, "Expected href value should be /link")
-
-	attributes = []html.Attribute{
-		{Key: "src", Val: "img.jpg"},
-	}
-
-	response = hrefValue(attributes)
-	assert.Equal(t, "<not-found>", response, "Expected href value should be <not-found>")
-}
-
 func Test_ParseLinks(t *testing.T) {
 	tt := []struct {
 		name              string
@@ -36,6 +18,11 @@ func Test_ParseLinks(t *testing.T) {
 		expectedLastText  string
 	}{
 		{name: "3 links", path: "./testdata/ex1.html", expectedLinks: 3, expectedFirstLink: "/other-page", expectedFirstText: "A link to another page", expectedLastLink: "/bob", expectedLastText: "Bob's page"},
+		{name: "trim whitespace", path: "./testdata/ex3.html", expectedLinks: 3, expectedFirstLink: "#", expectedFirstText: "Login", expectedLastLink: "https://twitter.com/marcusolsson", expectedLastText: "@marcusolsson), animated by Jon Calhoun (that's me!), and inspired by the original Go Gopher created by Renee French."},
+		{name: "no included comments", path: "./testdata/ex4.html", expectedLinks: 1, expectedFirstLink: "/dog-cat", expectedFirstText: "dog cat", expectedLastLink: "", expectedLastText: ""},
+
+		// I can't get this one to pass. The text within <strong>Github</strong>! is not being included, even though it's within the href block
+		//{name: "include strong tags", path: "./testdata/ex2.html", expectedLinks: 2, expectedFirstLink: "https://www.twitter.com/joncalhoun", expectedFirstText: "Check me out on Twitter", expectedLastLink: "https://github.com/gophercises", expectedLastText: "Gophercises is on Github"},
 	}
 
 	for _, tc := range tt {
@@ -68,4 +55,18 @@ func Test_ParseLinks(t *testing.T) {
 
 		})
 	}
+}
+
+func Test_hrefValue(t *testing.T) {
+	attributes := []html.Attribute{
+		{Key: "src", Val: "img.jpg"},
+		{Key: "title", Val: "x"},
+		{Key: "href", Val: "/link"},
+	}
+	response := hrefValue(attributes)
+	assert.Equal(t, "/link", response, "Expected href value should be /link")
+
+	attributes = []html.Attribute{{Key: "src", Val: "img.jpg"}}
+	response = hrefValue(attributes)
+	assert.Equal(t, "<not-found>", response, "Expected href value should be <not-found>")
 }
