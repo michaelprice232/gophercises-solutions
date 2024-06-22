@@ -32,7 +32,7 @@ func main() {
 
 	log.Printf("Target: %s", *baseTarget)
 
-	// HTTP GET the page and parse links
+	// Retrieve the page and parse HTML links
 	resp, err := http.Get(*baseTarget)
 	if err != nil {
 		log.Fatalf("error whilst doing a HTTP GET against %s: %s", *baseTarget, err)
@@ -71,15 +71,16 @@ func main() {
 		}
 
 		// Add links to the map, so we have a list of unique ones whilst maintaining a duplicate count
-		if _, ok := links[fullURL]; !ok {
+		if _, found := links[fullURL]; !found {
 			//log.Printf("Adding unique link to map: %s", fullURL)
 			links[fullURL] = &results{numberOfOccurrences: 1}
 			continue
 		}
 		links[fullURL].numberOfOccurrences++
 	}
-	log.Printf("Found %d links which match this domain. Results: ", len(links))
 
+	// Print results
+	log.Printf("Found %d links which match this domain. Results: ", len(links))
 	for _, l := range sorted(links) {
 		log.Print(l)
 	}
