@@ -3,27 +3,30 @@ package main
 import (
 	"fmt"
 	"regexp"
+	"slices"
 	"strings"
 )
 
-// TODO: fix when we rotate more than the alphabet length. Currently going out of index array
-
 const alphabet = "abcdefghijklmnopqrstuvwxyz"
 
+// caesarCipher returns cipher text based on the Caesar Cipher
+// https://en.wikipedia.org/wiki/Caesar_cipher
 func caesarCipher(s string, k int32) string {
-	isUppercase := regexp.MustCompile(`^[A-Z]$`)
-
-	alphabetLength := int32(len(alphabet))
-	rotationFactor := k
-
 	// Original alphabet in order
 	original := strings.Split(alphabet, "")
 
-	// Stores which index in the alphabet each character has been mapped to after rotation has been applied
-	mappings := make(map[string]int32)
-	for idx, letter := range original {
+	mappings := rotateCharacters(original, k)
 
-		proposedIndex := int32(idx) + rotationFactor
+	return generateCipherText(s, original, mappings)
+}
+
+// rotateCharacters rotates characters in original to the right rotationNumber of times and returns a new index mapping for each character.
+func rotateCharacters(original []string, rotationNumber int32) map[string]int32 {
+	alphabetLength := int32(len(alphabet))
+	mappings := make(map[string]int32)
+
+	for idx, letter := range original {
+		proposedIndex := int32(idx) + rotationNumber
 
 		// No wrap around required
 		if proposedIndex < alphabetLength {
@@ -32,21 +35,27 @@ func caesarCipher(s string, k int32) string {
 			continue
 		}
 
-		// Index has wrapped around to the beginning
-		extraPositions := proposedIndex - alphabetLength
+		// Index has wrapped around to the beginning. It might wrap multiple times, so we use the remainder operator
+		extraPositions := proposedIndex % alphabetLength
 		mappings[letter] = extraPositions
 		//fmt.Printf("Letter: %s (current index: %d, proposed index: %d (wrapped))\n", letter, idx, extraPositions)
 	}
 
-	var cipherText = ""
-	for _, letter := range s {
+	return mappings
+}
+
+func generateCipherText(inputStr string, original []string, mappings map[string]int32) string {
+	isUppercase := regexp.MustCompile(`^[A-Z]$`)
+	var cipherText string
+
+	for _, letter := range inputStr {
 		currentLetter := string(letter)
 
 		// Check for any letter characters and convert. Input letters can be uppercase
-		if contains(original, strings.ToLower(currentLetter)) {
+		if slices.Contains(original, strings.ToLower(currentLetter)) {
 			// If input is uppercase return as uppercase
 			if isUppercase.MatchString(currentLetter) {
-				fmt.Printf("Letter %s has been swapped to %s\n", currentLetter, strings.ToUpper(original[mappings[strings.ToLower(currentLetter)]]))
+				//fmt.Printf("Letter %s has been swapped to %s\n", currentLetter, strings.ToUpper(original[mappings[strings.ToLower(currentLetter)]]))
 				cipherText += strings.ToUpper(original[mappings[strings.ToLower(currentLetter)]])
 				continue
 			}
@@ -62,17 +71,7 @@ func caesarCipher(s string, k int32) string {
 	return cipherText
 }
 
-func contains(s []string, str string) bool {
-	var found bool
-	for _, v := range s {
-		if v == str {
-			found = true
-		}
-	}
-	return found
-}
-
 func main() {
-	inputText := "middle-Outz"
-	fmt.Printf("Input: %s\nReturn: %s\n", inputText, caesarCipher(inputText, 2))
+	inputText := "159357lcfd"
+	fmt.Printf("Input: %s\nReturn: %s\n", inputText, caesarCipher(inputText, 98))
 }
