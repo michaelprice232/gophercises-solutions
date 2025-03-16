@@ -1,9 +1,9 @@
 package model
 
 type Task struct {
-	id        int
-	name      string
-	completed bool
+	ID        int
+	Name      string
+	Completed bool
 }
 
 type Tasks []Task

@@ -56,6 +56,34 @@ func (db *PostgresDB) CompleteTask(_ int) error {
 }
 
 func (db *PostgresDB) ListOutstandingTasks() (model.Tasks, error) {
+	if db.conn == nil {
+		return nil, fmt.Errorf("db connection not initialized")
+	}
 
-	return model.Tasks{}, nil
+	// Check for errors at the end
+	rows, _ := db.conn.Query(context.Background(), `SELECT * FROM tasks WHERE completed = false`)
+	defer rows.Close()
+
+	results := make(model.Tasks, 0)
+	for rows.Next() {
+		var id int
+		var name string
+		var completed bool
+
+		err := rows.Scan(&id, &name, &completed)
+		if err != nil {
+			return nil, fmt.Errorf("scanning postgres row: %w", err)
+		}
+
+		results = append(results, model.Task{
+			ID:        id,
+			Name:      name,
+			Completed: completed,
+		})
+	}
+	if rows.Err() != nil {
+		return nil, fmt.Errorf("scanning postgres rows: %w", rows.Err())
+	}
+
+	return results, nil
 }

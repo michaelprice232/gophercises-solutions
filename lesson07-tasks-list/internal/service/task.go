@@ -1,33 +1,52 @@
 package service
 
 import (
-	"log/slog"
+	"fmt"
+	"strings"
 	"tasks/internal/repository"
 )
 
 type Service struct {
-	db repository.DB
+	DB repository.DB
 }
 
 func NewService(db repository.DB) (*Service, error) {
-	return &Service{
-		db: db,
-	}, nil
+	s := &Service{
+		DB: db,
+	}
+
+	err := s.DB.Connect()
+	if err != nil {
+		return nil, err
+	}
+
+	return s, nil
 }
 
 func (s *Service) AddTask(name string) error {
-	slog.Info("Adding task.", "task", name)
+	fmt.Printf("Added task: %s\n", name)
 
-	err := s.db.Connect()
+	return s.DB.AddTask(name)
+}
+
+func (s *Service) ListOutStandingTasks() error {
+	fmt.Println("Listing out standing tasks:")
+
+	results, err := s.DB.ListOutstandingTasks()
 	if err != nil {
-		return err
+		return fmt.Errorf("listing out standing tasks: %w", err)
 	}
 
-	defer func() {
-		if err = s.db.Close(); err != nil {
-			slog.Error("problem closing database connection", "error", err)
-		}
-	}()
+	// Define column widths
+	idWidth := 5
+	nameWidth := 20
+	statusWidth := 6
 
-	return s.db.AddTask(name)
+	fmt.Printf("%-*s %-*s %-*s\n", idWidth, "ID", nameWidth, "Task", statusWidth, "Completed")
+	fmt.Println(strings.Repeat("-", idWidth+nameWidth+statusWidth+5))
+	for _, task := range results {
+		fmt.Printf("%-*d %-*s %-*t\n", idWidth, task.ID, nameWidth, task.Name, statusWidth, task.Completed)
+	}
+
+	return nil
 }

@@ -19,22 +19,30 @@ func main() {
 		os.Exit(1)
 	}
 
+	db, err := repository.NewPostgresDB(dbURL)
+	if err != nil {
+		slog.Error("unable to create Postgres client: %w", err)
+		os.Exit(1)
+	}
+
+	s, err := service.NewService(db)
+	if err != nil {
+		slog.Error("unable to create service: %w", err)
+		os.Exit(1)
+	}
+
+	defer func() {
+		if err = s.DB.Close(); err != nil {
+			slog.Error("problem closing database connection", "error", err)
+		}
+	}()
+
 	var addCmd = &cobra.Command{
 		Use:   "add [task to add]",
 		Short: "Add a task to the task list",
 		Long:  "Tasks are added and then can be completed and removed later",
 		Args:  cobra.MinimumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			db, err := repository.NewPostgresDB(dbURL)
-			if err != nil {
-				return fmt.Errorf("unable to create Postgres client: %w", err)
-			}
-
-			s, err := service.NewService(db)
-			if err != nil {
-				return fmt.Errorf("unable to create service: %w", err)
-			}
-
 			err = s.AddTask(strings.Join(args, " "))
 			if err != nil {
 				return fmt.Errorf("unable to add task: %w", err)
@@ -62,7 +70,11 @@ func main() {
 		Long:  "Lists the tasks which are waiting to be actioned",
 		Args:  cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			slog.Info("Listing outstanding tasks.")
+			err = s.ListOutStandingTasks()
+			if err != nil {
+				return fmt.Errorf("unable to list outstanding tasks: %w", err)
+			}
+
 			return nil
 		},
 	}
