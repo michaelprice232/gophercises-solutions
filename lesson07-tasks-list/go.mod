@@ -1,4 +1,4 @@
-module gophercises-ex7
+module tasks
 
 go 1.23
 

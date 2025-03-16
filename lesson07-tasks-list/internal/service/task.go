@@ -1,7 +1,8 @@
 package service
 
 import (
-	"gophercises-ex7/internal/repository"
+	"log/slog"
+	"tasks/internal/repository"
 )
 
 type Service struct {
@@ -15,7 +16,18 @@ func NewService(db repository.DB) (*Service, error) {
 }
 
 func (s *Service) AddTask(name string) error {
-	// Perform other business logic here
+	slog.Info("Adding task.", "task", name)
+
+	err := s.db.Connect()
+	if err != nil {
+		return err
+	}
+
+	defer func() {
+		if err = s.db.Close(); err != nil {
+			slog.Error("problem closing database connection", "error", err)
+		}
+	}()
 
 	return s.db.AddTask(name)
 }

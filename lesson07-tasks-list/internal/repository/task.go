@@ -1,11 +1,12 @@
 package repository
 
 import (
-	"gophercises-ex7/internal/model"
+	"tasks/internal/model"
 )
 
 type DB interface {
 	Connect() error
+	Close() error
 	AddTask(name string) error
 	CompleteTask(id int) error
 	ListOutstandingTasks() (model.Tasks, error)

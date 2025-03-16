@@ -1,5 +1,5 @@
-run:
+run_db:
 	docker-compose up -d --build
 
-down:
+down_db:
 	docker-compose down --volumes

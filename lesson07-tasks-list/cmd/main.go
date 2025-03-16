@@ -5,8 +5,8 @@ import (
 	"os"
 	"strings"
 
-	"gophercises-ex7/internal/repository"
-	"gophercises-ex7/internal/service"
+	"tasks/internal/repository"
+	"tasks/internal/service"
 
 	"github.com/spf13/cobra"
 	"log/slog"
@@ -25,9 +25,6 @@ func main() {
 		Long:  "Tasks are added and then can be completed and removed later",
 		Args:  cobra.MinimumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			input := strings.Join(args, " ")
-			slog.Info("Adding task.", "task", input)
-
 			db, err := repository.NewPostgresDB(dbURL)
 			if err != nil {
 				return fmt.Errorf("unable to create Postgres client: %w", err)
@@ -38,7 +35,7 @@ func main() {
 				return fmt.Errorf("unable to create service: %w", err)
 			}
 
-			err = s.AddTask(input)
+			err = s.AddTask(strings.Join(args, " "))
 			if err != nil {
 				return fmt.Errorf("unable to add task: %w", err)
 			}
