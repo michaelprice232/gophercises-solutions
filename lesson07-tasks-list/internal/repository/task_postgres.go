@@ -3,9 +3,14 @@ package repository
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/jackc/pgx/v5"
 	"tasks/internal/model"
+)
+
+const (
+	dbTimeout = time.Second * 5
 )
 
 type PostgresDB struct {
@@ -17,8 +22,11 @@ func NewPostgresDB(dbURL string) (*PostgresDB, error) {
 	return &PostgresDB{dbURL: dbURL}, nil
 }
 
-func (db *PostgresDB) Connect() error {
-	conn, err := pgx.Connect(context.Background(), db.dbURL)
+func (db *PostgresDB) Connect(ctx context.Context) error {
+	ctx, cancel := context.WithTimeout(ctx, dbTimeout)
+	defer cancel()
+
+	conn, err := pgx.Connect(ctx, db.dbURL)
 	if err != nil {
 		return fmt.Errorf("creating postgres connection: %w", err)
 	}
@@ -27,9 +35,12 @@ func (db *PostgresDB) Connect() error {
 	return nil
 }
 
-func (db *PostgresDB) Close() error {
+func (db *PostgresDB) Close(ctx context.Context) error {
+	ctx, cancel := context.WithTimeout(ctx, dbTimeout)
+	defer cancel()
+
 	if db.conn != nil {
-		err := db.conn.Close(context.Background())
+		err := db.conn.Close(ctx)
 		if err != nil {
 			return fmt.Errorf("closing postgres connection: %w", err)
 		}
@@ -37,31 +48,52 @@ func (db *PostgresDB) Close() error {
 	return nil
 }
 
-func (db *PostgresDB) AddTask(name string) error {
+func (db *PostgresDB) AddTask(ctx context.Context, name string) error {
+	ctx, cancel := context.WithTimeout(ctx, dbTimeout)
+	defer cancel()
+
 	if db.conn == nil {
 		return fmt.Errorf("db connection not initialized")
 	}
 
-	_, err := db.conn.Exec(context.Background(), `INSERT INTO tasks (name) VALUES ($1)`, name)
+	tag, err := db.conn.Exec(ctx, `INSERT INTO tasks (name) VALUES ($1)`, name)
 	if err != nil {
-		return fmt.Errorf("inserting task into tasks table: %w", err)
+		return fmt.Errorf("inserting task '%s' into tasks table: %w", name, err)
+	}
+
+	if tag.RowsAffected() == 0 {
+		return fmt.Errorf("no rows inserted whilst adding task '%s' into tasks table", name)
 	}
 
 	return nil
 }
 
-func (db *PostgresDB) CompleteTask(_ int) error {
+func (db *PostgresDB) CompleteTask(ctx context.Context, taskID int) error {
+	ctx, cancel := context.WithTimeout(ctx, dbTimeout)
+	defer cancel()
+
+	tag, err := db.conn.Exec(ctx, `UPDATE tasks SET completed = true WHERE id = $1`, taskID)
+	if err != nil {
+		return fmt.Errorf("setting taskID %d to completed: %w", taskID, err)
+	}
+
+	if tag.RowsAffected() == 0 {
+		return fmt.Errorf("taskID %d not found", taskID)
+	}
 
 	return nil
 }
 
-func (db *PostgresDB) ListOutstandingTasks() (model.Tasks, error) {
+func (db *PostgresDB) ListOutstandingTasks(ctx context.Context) (model.Tasks, error) {
+	ctx, cancel := context.WithTimeout(ctx, dbTimeout)
+	defer cancel()
+
 	if db.conn == nil {
 		return nil, fmt.Errorf("db connection not initialized")
 	}
 
 	// Check for errors at the end
-	rows, _ := db.conn.Query(context.Background(), `SELECT * FROM tasks WHERE completed = false`)
+	rows, _ := db.conn.Query(ctx, `SELECT * FROM tasks WHERE completed = false`)
 	defer rows.Close()
 
 	results := make(model.Tasks, 0)

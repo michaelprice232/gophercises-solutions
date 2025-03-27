@@ -1,13 +1,14 @@
 package repository
 
 import (
+	"context"
 	"tasks/internal/model"
 )
 
 type DB interface {
-	Connect() error
-	Close() error
-	AddTask(name string) error
-	CompleteTask(id int) error
-	ListOutstandingTasks() (model.Tasks, error)
+	Connect(ctx context.Context) error
+	Close(ctx context.Context) error
+	AddTask(ctx context.Context, name string) error
+	CompleteTask(ctx context.Context, id int) error
+	ListOutstandingTasks(ctx context.Context) (model.Tasks, error)
 }
