@@ -72,7 +72,13 @@ func (db *PostgresDB) CompleteTask(ctx context.Context, taskID int) error {
 	ctx, cancel := context.WithTimeout(ctx, dbTimeout)
 	defer cancel()
 
-	tag, err := db.conn.Exec(ctx, `UPDATE tasks SET completed = true WHERE id = $1`, taskID)
+	now := time.Now()
+
+	tag, err := db.conn.Exec(ctx, `
+		UPDATE tasks 
+		SET completed = true, completed_at = $1 
+		WHERE id = $2
+		`, now, taskID)
 	if err != nil {
 		return fmt.Errorf("setting taskID %d to completed: %w", taskID, err)
 	}
@@ -93,24 +99,63 @@ func (db *PostgresDB) ListOutstandingTasks(ctx context.Context) (model.Tasks, er
 	}
 
 	// Check for errors at the end
-	rows, _ := db.conn.Query(ctx, `SELECT * FROM tasks WHERE completed = false`)
+	rows, _ := db.conn.Query(ctx, `
+		SELECT id, name FROM tasks 
+		WHERE completed = false`)
 	defer rows.Close()
 
 	results := make(model.Tasks, 0)
 	for rows.Next() {
 		var id int
 		var name string
-		var completed bool
-
-		err := rows.Scan(&id, &name, &completed)
+		err := rows.Scan(&id, &name)
 		if err != nil {
 			return nil, fmt.Errorf("scanning postgres row: %w", err)
 		}
 
 		results = append(results, model.Task{
-			ID:        id,
-			Name:      name,
-			Completed: completed,
+			ID:   id,
+			Name: name,
+		})
+	}
+	if rows.Err() != nil {
+		return nil, fmt.Errorf("scanning postgres rows: %w", rows.Err())
+	}
+
+	return results, nil
+}
+
+func (db *PostgresDB) ListCompletedTasks(ctx context.Context) (model.Tasks, error) {
+	ctx, cancel := context.WithTimeout(ctx, dbTimeout)
+	defer cancel()
+
+	if db.conn == nil {
+		return nil, fmt.Errorf("db connection not initialized")
+	}
+
+	// Check for errors at the end
+	rows, _ := db.conn.Query(ctx, `
+		SELECT id, name, completed_at FROM tasks 
+	 	WHERE completed = true AND DATE(completed_at) = $1
+		ORDER BY completed_at DESC 
+		`, time.Now())
+	defer rows.Close()
+
+	results := make(model.Tasks, 0)
+	for rows.Next() {
+		var id int
+		var name string
+		var completedAt time.Time
+
+		err := rows.Scan(&id, &name, &completedAt)
+		if err != nil {
+			return nil, fmt.Errorf("scanning postgres row: %w", err)
+		}
+
+		results = append(results, model.Task{
+			ID:          id,
+			Name:        name,
+			CompletedAt: completedAt,
 		})
 	}
 	if rows.Err() != nil {

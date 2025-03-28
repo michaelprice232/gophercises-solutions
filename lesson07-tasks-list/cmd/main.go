@@ -72,7 +72,7 @@ func main() {
 
 	var outstandingCmd = &cobra.Command{
 		Use:   "outstanding",
-		Short: "List the outstanding tasks in the task list",
+		Short: "Lists the outstanding tasks in the task list",
 		Long:  "Lists the tasks which are waiting to be actioned",
 		Args:  cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -85,8 +85,23 @@ func main() {
 		},
 	}
 
+	var completedCmd = &cobra.Command{
+		Use:   "completed",
+		Short: "Lists the tasks which have been completed today",
+		Long:  "Lists the tasks which have been completed today",
+		Args:  cobra.NoArgs,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			err = s.ListCompletedTasks(ctx)
+			if err != nil {
+				return err
+			}
+
+			return nil
+		},
+	}
+
 	var rootCmd = &cobra.Command{Use: "task"}
-	rootCmd.AddCommand(addCmd, doCmd, outstandingCmd)
+	rootCmd.AddCommand(addCmd, doCmd, outstandingCmd, completedCmd)
 	if err = rootCmd.Execute(); err != nil {
 		slog.Error("task returned an error.", "error", err)
 		os.Exit(1)
