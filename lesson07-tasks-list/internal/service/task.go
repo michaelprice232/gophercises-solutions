@@ -6,6 +6,7 @@ import (
 	"strconv"
 	"strings"
 	"tasks/internal/repository"
+	"time"
 )
 
 type Service struct {
@@ -39,21 +40,49 @@ func (s *Service) AddTask(ctx context.Context, name string) error {
 func (s *Service) ListOutStandingTasks(ctx context.Context) error {
 	results, err := s.DB.ListOutstandingTasks(ctx)
 	if err != nil {
-		return fmt.Errorf("listing out standing tasks: %w", err)
+		return fmt.Errorf("listing outstanding tasks: %w", err)
+	}
+
+	if len(results) == 0 {
+		fmt.Println("There are no outstanding tasks")
+		return nil
 	}
 
 	fmt.Println("Listing outstanding tasks:")
 
 	// Define column widths
 	idWidth := 5
-	nameWidth := 20
-	statusWidth := 6
+	nameWidth := 30
 
 	// Pad with spaces on the right instead of left to align the fields
-	fmt.Printf("%-*s %-*s %-*s\n", idWidth, "ID", nameWidth, "Task", statusWidth, "Completed")
-	fmt.Println(strings.Repeat("-", idWidth+nameWidth+statusWidth+5))
+	fmt.Printf("%-*s %-*s\n", idWidth, "ID", nameWidth, "Task")
+	fmt.Println(strings.Repeat("-", idWidth+nameWidth))
 	for _, task := range results {
-		fmt.Printf("%-*d %-*s %-*t\n", idWidth, task.ID, nameWidth, task.Name, statusWidth, task.Completed)
+		fmt.Printf("%-*d %-*s\n", idWidth, task.ID, nameWidth, task.Name)
+	}
+
+	return nil
+}
+
+func (s *Service) ListCompletedTasks(ctx context.Context) error {
+	results, err := s.DB.ListCompletedTasks(ctx)
+	if err != nil {
+		return fmt.Errorf("listing completed tasks: %w", err)
+	}
+
+	fmt.Println("Listing completed tasks:")
+
+	// Define column widths
+	idWidth := 5
+	nameWidth := 30
+	completedAtWidth := 10
+
+	// Pad with spaces on the right instead of left to align the fields
+	fmt.Printf("%-*s %-*s %-*s\n", idWidth, "ID", nameWidth, "Task", completedAtWidth, "Completed At")
+	fmt.Println(strings.Repeat("-", idWidth+nameWidth+completedAtWidth+13))
+	for _, task := range results {
+		completedAt := task.CompletedAt.Format(time.RFC822)
+		fmt.Printf("%-*d %-*s %-*s\n", idWidth, task.ID, nameWidth, task.Name, completedAtWidth, completedAt)
 	}
 
 	return nil

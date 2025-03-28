@@ -11,4 +11,5 @@ type DB interface {
 	AddTask(ctx context.Context, name string) error
 	CompleteTask(ctx context.Context, id int) error
 	ListOutstandingTasks(ctx context.Context) (model.Tasks, error)
+	ListCompletedTasks(ctx context.Context) (model.Tasks, error)
 }
